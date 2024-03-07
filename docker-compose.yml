@@ -1,0 +1,27 @@
+version: "latest"
+name: app_parking
+services:
+  nginx:
+    build: /nginx
+    container_name: nginx_park
+    ports:
+      - "80:80"
+    depends_on:
+      - api_1
+      - api_2
+      - api_3
+  api_1:
+    build: /api
+    container_name: container_apiPark_1
+    ports:
+      - "8080:3000"
+  api_2:
+    build: /api
+    container_name: container_apiPark_2
+    ports:
+      - "8081:3000"
+  api_3:
+    build: /api
+    container_name: container_apiPark_3
+    ports:
+      - "8082:3000"

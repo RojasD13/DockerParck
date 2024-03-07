@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        Parking
+    </title>
+    <!-- Para utilizar el css de bootstrap: -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <!-- <form action="/add" method="post"> -->
+        <legend>
+            Gestión de autos
+        </legend>
+        <form id="formulario">
+            <div class="form-group">
+                <input placeholder="Ingrese la placa del auto" type="text" id="placa" class="form-control" name="placa">
+            </div>
+            <div class="form-group">
+                <input placeholder="Ingrese el color del auto" type="text" id="color" class="form-control" name="color">
+            </div>
+            <div>
+                <input type="file" id="imagen" onchange="mostrarImagen()">
+            </div>
+            <button id="agrearAuto" class="btn btn-primary" type="button">
+                Agregar
+            </button>
+        </form>
+        <hr>
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>Placa</th>
+                    <th>Color</th>
+                    <th>Hora de ingreso</th>
+                    <th>Foto</th>
+                </tr>
+            </thead>
+            <tbody id="infoTabla">
+
+            </tbody>
+        </table>
+    </div>
+    <script>
+
+        function mostrarImagen() {
+
+            const imagen = document.getElementById('imagen').files[0];
+            const reader = new FileReader();
+
+            reader.onload = function () {
+                const url = reader.result;
+                const img = document.createElement('img');
+                img.src = url;
+            };
+
+            reader.readAsDataURL(imagen);
+        }
+
+        document.getElementById('placa').focus();
+        document.getElementById('agrearAuto').addEventListener("click", agrearAuto);
+        let contennido = document.querySelector("#infoTabla");
+
+
+        function agrearAuto(event) {
+            event.preventDefault();
+            let placa = document.getElementById("placa").value;
+            let color = document.getElementById("color").value;            
+            const imagen = document.getElementById('imagen').files[0];
+            let hora = Date.now();
+
+            let formData = new FormData();
+            formData.append("placa", placa);
+            formData.append("color", color);
+            formData.append("hora", hora);
+            formData.append("imagen", imagen);
+
+
+            const options = {
+                method: 'POST',
+                body: formData,
+            };
+
+            fetch('http://localhost/api/add', options)
+                .then(response => {
+                    mostrarTabla();
+                    mostrarImagen();
+                })
+            const formulario = document.getElementById('formulario');
+            formulario.reset();
+
+        }
+
+        function deleteElement(placa) {
+            const url = `http://localhost/api/${placa}`;
+
+            fetch(url, { method: 'DELETE', })
+                .then((response) => {
+                    mostrarTabla();
+
+                });
+        }
+
+        function padTo2Digits(num) {
+            return num.toString().padStart(2, '0');
+        }
+
+        function formatDate(date) {
+            return (
+                [
+                    date.getFullYear(),
+                    padTo2Digits(date.getMonth() + 1),
+                    padTo2Digits(date.getDate()),
+                ].join('-') +
+                ' ' +
+                [
+                    padTo2Digits(date.getHours()),
+                    padTo2Digits(date.getMinutes()),
+                    padTo2Digits(date.getSeconds()),
+                ].join(':')
+            );
+        }
+
+        function mostrarTabla() {
+            fetch("http://localhost/api/")
+                .then(data => data.json())
+                .then(data2 => {
+                    llenarTabla(data2);
+                })
+        }
+
+        function llenarTabla(datos) {
+            let tabla = document.getElementById("infoTabla");
+            tabla.innerHTML = '';
+            for (let valor of datos) {
+                contennido.innerHTML += `
+                <tr>
+                    <th>${valor.placa}</th>
+                    <td>${valor.color}</td>
+                    <td>${formatDate(new Date(parseInt(valor.hora)))}</td>
+                    <td>
+                        <img src="${valor.imagen}" style="width:200px; height:200px;"/>
+                    </td>
+                    <td>
+                        <button id="borrarAuto" class="btn btn-danger" onClick = "deleteElement('${valor.placa}')">
+                            Borrar
+                        </button>
+                    </td>                  
+                </tr>
+                `;
+            }
+        }
+
+        mostrarTabla();
+    </script>
+</body>
+
+</html>
